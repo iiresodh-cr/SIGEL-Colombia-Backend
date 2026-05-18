@@ -42,18 +42,22 @@ async def analizar_contexto(request: Request):
     # Atrapamos el JSON crudo tal como viene de React, sin validaciones estrictas
     try:
         payload = await request.json()
-        print(f"INFO: Payload recibido en Cloud Run: {payload}")
     except Exception:
         payload = {}
 
-    # Extraemos los datos de forma manual y segura (Si falta algo, ponemos valores por defecto)
+    # Extraemos los datos de forma manual y segura
     rol = str(payload.get("rol", "usuario"))
     nombre = str(payload.get("nombre_profesional", "Profesional"))
     total = int(payload.get("total_victimas") or 0)
     pendientes = int(payload.get("pendientes_acreditacion") or 0)
     
+    # EL FIX ESTÁ AQUÍ: Limpiar la lista para que no haya 'None' y asegurar que todo sea texto
     eventos_crudos = payload.get("eventos_semana")
-    eventos_semana = eventos_crudos if isinstance(eventos_crudos, list) else []
+    if isinstance(eventos_crudos, list):
+        # Filtramos elementos nulos y convertimos todo a string
+        eventos_semana = [str(e) for e in eventos_crudos if e is not None]
+    else:
+        eventos_semana = []
 
     # 4. Construcción del Prompt Inteligente
     prompt = f"""
