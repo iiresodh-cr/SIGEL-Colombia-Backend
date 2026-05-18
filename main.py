@@ -75,6 +75,7 @@ async def analizar_contexto(request: Request, user_token: dict = Depends(verific
     except Exception:
         payload = {}
 
+    # Extraemos los datos y forzamos el conteo matemático
     rol = str(payload.get("rol", "usuario"))
     nombre = str(payload.get("nombre_profesional", "Profesional"))
     total = int(payload.get("total_victimas") or 0)
@@ -85,22 +86,28 @@ async def analizar_contexto(request: Request, user_token: dict = Depends(verific
         eventos_semana = [str(e) for e in eventos_crudos if e is not None]
     else:
         eventos_semana = []
+        
+    # Variables estrictas para la IA
+    cantidad_eventos = len(eventos_semana)
+    eventos_texto = ', '.join(eventos_semana) if cantidad_eventos > 0 else '0 eventos'
 
+    # 4. Prompt de PIDA con reglas antidistracción
     prompt = f"""
-    Eres el Copiloto Judicial Inteligente del sistema SIGEL (Sistema de Información para la Gestión de Litigio) de la organización IIRESODH.
+    Tu nombre es PIDA, el asistente de Inteligencia Artificial del sistema SIGEL (IIRESODH).
     Tu objetivo es dar un resumen ejecutivo, profesional y directo (máximo 4 líneas) a un {rol} que acaba de iniciar sesión.
     
-    Contexto actual del profesional ({nombre}):
+    Contexto ESTRICTO de {nombre} (REGLA DE ORO: NO inventes números, usa SOLO la siguiente información):
     - Total de víctimas bajo su representación: {total}
-    - Víctimas que requieren atención urgente (pendientes de acreditación JEP): {pendientes}
-    - Eventos/Audiencias programadas esta semana: {', '.join(eventos_semana) if eventos_semana else 'Ninguna'}
+    - Víctimas pendientes de acreditación JEP: {pendientes}
+    - Eventos/Audiencias esta semana: {cantidad_eventos} ({eventos_texto})
     
     Instrucciones:
-    1. Saluda formalmente.
-    2. Si el abogado tiene 0 víctimas, dale la bienvenida e indícale que el sistema está listo para cuando la coordinación central le asigne expedientes. No menciones nada de audiencias si tiene 0 casos.
-    3. Si tiene casos/audiencias, haz un análisis cruzado rápido sugiriendo prepararse para la diligencia.
-    4. Mantén un tono de asistente legal eficiente, proactivo y empático.
-    5. NO uses formato markdown en tu respuesta, devuelve texto plano.
+    1. Preséntate brevemente como PIDA y saluda formalmente.
+    2. Si tiene 0 eventos, di explícitamente que no tiene audiencias programadas. JAMÁS inventes eventos.
+    3. Si tiene 0 víctimas, dale la bienvenida e indícale que estás a la espera de nuevas asignaciones.
+    4. Si tiene casos o audiencias, haz un análisis rápido sugiriendo prioridades.
+    5. Mantén un tono de asistente legal eficiente y empático.
+    6. NO uses formato markdown (asteriscos, negritas).
     """
 
     try:
