@@ -31,13 +31,13 @@ except Exception as e:
     print(f"Error inicializando Vertex AI: {e}")
     client = None
 
-# 3. Modelos de datos esperados desde React
+# 3. Modelos de datos a prueba de fallos (Evita el Error 422)
 class ContextoCopiloto(BaseModel):
-    rol: str
-    nombre_profesional: str
-    total_victimas: int
-    pendientes_acreditacion: int
-    eventos_semana: List[str]
+    rol: Optional[str] = "usuario"
+    nombre_profesional: Optional[str] = "Profesional"
+    total_victimas: Optional[int] = 0
+    pendientes_acreditacion: Optional[int] = 0
+    eventos_semana: Optional[List[str]] = []
 
 @app.get("/")
 def read_root():
@@ -60,9 +60,10 @@ def analizar_contexto(contexto: ContextoCopiloto):
     
     Instrucciones:
     1. Saluda formalmente.
-    2. Haz un análisis cruzado rápido: si hay audiencias y víctimas pendientes de acreditación, sugiere contactarlas como preparación para la diligencia. Si no hay audiencias, enfócate en la tarea de acreditación.
-    3. Mantén un tono de asistente legal eficiente, proactivo y empático.
-    4. NO uses formato markdown (asteriscos, negritas) en tu respuesta, devuelve texto plano para la UI.
+    2. Si el abogado tiene 0 víctimas, dale la bienvenida e indícale que el sistema está listo para cuando la coordinación central le asigne nuevos expedientes.
+    3. Si tiene casos/audiencias, haz un análisis cruzado rápido sugiriendo prepararse para la diligencia.
+    4. Mantén un tono de asistente legal eficiente, proactivo y empático.
+    5. NO uses formato markdown (asteriscos, negritas) en tu respuesta, devuelve texto plano para la UI.
     """
 
     try:
@@ -71,7 +72,7 @@ def analizar_contexto(contexto: ContextoCopiloto):
             model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
-                temperature=0.3,
+                temperature=0.3, 
             )
         )
         return {"sugerencia": response.text.strip()}
