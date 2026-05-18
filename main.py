@@ -66,12 +66,12 @@ def analizar_contexto(contexto: ContextoCopiloto):
     """
 
     try:
-        # 5. Llamada al modelo Gemini 1.5 Flash (ideal por su velocidad y bajo costo para tareas de texto)
+        # 5. Llamada al modelo Gemini 2.5 Flash
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
-                temperature=0.3, # Baja temperatura para respuestas consistentes y profesionales
+                temperature=0.3,
             )
         )
         return {"sugerencia": response.text.strip()}
