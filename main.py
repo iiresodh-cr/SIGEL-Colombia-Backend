@@ -75,7 +75,7 @@ async def analizar_contexto(request: Request, user_token: dict = Depends(verific
     except Exception:
         payload = {}
 
-    # Extraemos los datos y forzamos el conteo matemático
+    # Extraemos los datos
     rol = str(payload.get("rol", "usuario"))
     nombre = str(payload.get("nombre_profesional", "Profesional"))
     total = int(payload.get("total_victimas") or 0)
@@ -86,31 +86,30 @@ async def analizar_contexto(request: Request, user_token: dict = Depends(verific
         eventos_semana = [str(e) for e in eventos_crudos if e is not None]
     else:
         eventos_semana = []
-        
-    # Variables estrictas para la IA
-    cantidad_eventos = len(eventos_semana)
-    eventos_texto = ', '.join(eventos_semana) if cantidad_eventos > 0 else '0 eventos'
 
-    # 4. Prompt de PIDA con reglas antidistracción
-    # Variables estrictas para la IA
     cantidad_eventos_total = len(eventos_semana)
+
+    # Lógica inteligente: Si es admin, habla de la institución. Si es abogado, habla de sus casos.
+    es_admin = rol.lower() in ["administrador", "admin", "superadmin"]
+    texto_victimas = "Total de víctimas en el sistema" if es_admin else "Total de víctimas exclusivas bajo su representación"
+    texto_pendientes = "Víctimas del sistema pendientes de acreditación" if es_admin else "Sus víctimas que requieren atención urgente"
 
     prompt = f"""
     Eres PIDA, el asistente de IA del SIGEL.
     
     Contexto ESTRICTO:
     - Usuario: {nombre}
-    - Total de víctimas propias: {total}
-    - Pendientes de acreditación: {pendientes}
-    - Eventos vigentes verificados: {cantidad_eventos_total}
+    - Rol en el sistema: {rol}
+    - {texto_victimas}: {total}
+    - {texto_pendientes}: {pendientes}
+    - Eventos FUTUROS programados: {cantidad_eventos_total}
     
-    INSTRUCCIONES CRÍTICAS QUE NO PUEDES ROMPER:
-    1. NO TE PRESENTES. Está estrictamente prohibido decir "Soy PIDA", "Mi nombre es PIDA" o similares.
-    2. Inicia directamente saludando al usuario por su nombre exacto: "Bienvenido/a {nombre}." NUNCA uses títulos como "Dr.", "Lic." o "Abogado".
-    3. Si {total} es 0, indícale que estás a la espera de que se le asignen expedientes.
-    4. Si {cantidad_eventos_total} es 0, confirma explícitamente que no hay eventos ni audiencias programadas en el calendario activo. NUNCA inventes eventos.
-    5. Si hay eventos vigentes, sugiere revisarlos, pero aclarando que es la agenda institucional, no personal.
-    6. Devuelve texto plano, sin markdown. Sé directo y corporativo.
+    INSTRUCCIONES CRÍTICAS:
+    1. NO TE PRESENTES. No digas "Soy PIDA". Inicia directamente: "Bienvenido/a {nombre}." NUNCA uses títulos como Dr., Lic.
+    2. Si {total} es 0, indica que la base de datos está vacía.
+    3. Si {cantidad_eventos_total} es 0, confirma explícitamente que no hay audiencias ni eventos futuros programados. JAMÁS inventes eventos.
+    4. Usa un tono analítico, directo y corporativo.
+    5. No uses formato markdown.
     """
 
     try:
