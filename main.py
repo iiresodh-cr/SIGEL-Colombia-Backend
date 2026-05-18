@@ -51,7 +51,7 @@ async def analizar_contexto(request: Request):
     total = int(payload.get("total_victimas") or 0)
     pendientes = int(payload.get("pendientes_acreditacion") or 0)
     
-    # EL FIX ESTÁ AQUÍ: Limpiar la lista para que no haya 'None' y asegurar que todo sea texto
+    # Limpiar la lista para que no haya 'None' y asegurar que todo sea texto
     eventos_crudos = payload.get("eventos_semana")
     if isinstance(eventos_crudos, list):
         # Filtramos elementos nulos y convertimos todo a string
@@ -61,7 +61,7 @@ async def analizar_contexto(request: Request):
 
     # 4. Construcción del Prompt Inteligente
     prompt = f"""
-    Eres el Copiloto Judicial Inteligente del sistema SIGEL (Sistema de Información para la Gestión de Litigio) de la organización IIRESODH.
+    Eres el Copiloto Judicial Inteligente del sistema SIGEL (Sistema de Información para la Gestión Electrónica de Litigios) de la organización IIRESODH.
     Tu objetivo es dar un resumen ejecutivo, profesional y directo (máximo 4 líneas) a un {rol} que acaba de iniciar sesión.
     
     Contexto actual del profesional ({nombre}):
@@ -70,7 +70,7 @@ async def analizar_contexto(request: Request):
     - Eventos/Audiencias programadas esta semana: {', '.join(eventos_semana) if eventos_semana else 'Ninguna'}
     
     Instrucciones:
-    1. Saluda formalmente.
+    1. Saluda formalmente utilizando el nombre, sin prefijos como Dr. o parecidos.
     2. Si el abogado tiene 0 víctimas, dale la bienvenida e indícale que el sistema está listo para cuando la coordinación central le asigne expedientes. No menciones nada de audiencias si tiene 0 casos.
     3. Si tiene casos/audiencias, haz un análisis cruzado rápido sugiriendo prepararse para la diligencia.
     4. Mantén un tono de asistente legal eficiente, proactivo y empático.
